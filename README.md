@@ -58,7 +58,13 @@ _build_bili_danmu/
 - WebDAV 密码已做持久化处理。
 - 播放操作已加互斥锁，避免连点导致重复上传/重复唤起。
 
+
+## 致谢与参考
+
+- ASS 转换逻辑与参数设计参考项目：https://github.com/gwy15/danmu2ass
+
 ## License
 
 MIT
+
 
