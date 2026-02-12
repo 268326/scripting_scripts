@@ -256,6 +256,49 @@ export async function uploadTextToWebDav(
   }
 }
 
+let subtitleHttpServer: any = null;
+let subtitleRouteSeed = 0;
+
+function ensureSubtitleServer(): any {
+  const g: any = globalThis as any;
+  const HttpServerCtor = g?.HttpServer;
+  if (!HttpServerCtor) {
+    throw new Error("当前环境不支持 HttpServer，请确认 Scripting 会员与版本功能已启用");
+  }
+
+  if (!subtitleHttpServer) {
+    subtitleHttpServer = new HttpServerCtor();
+    const startError = subtitleHttpServer.start({ port: 0, forceIPv4: true });
+    if (startError) {
+      subtitleHttpServer = null;
+      throw new Error(`启动 HttpServer 失败: ${startError}`);
+    }
+  }
+
+  if (!subtitleHttpServer.port) {
+    throw new Error("HttpServer 启动异常：端口不可用");
+  }
+
+  return subtitleHttpServer;
+}
+
+export function buildLocalAssSubtitleUrl(assText: string): string {
+  const g: any = globalThis as any;
+  const HttpResponse = g?.HttpResponse;
+  const HttpResponseBody = g?.HttpResponseBody;
+  if (!HttpResponse || !HttpResponseBody) {
+    throw new Error("当前环境缺少 HttpServer 响应接口");
+  }
+
+  const server = ensureSubtitleServer();
+  subtitleRouteSeed += 1;
+  const route = `/__bili_danmu_sub_${Date.now()}_${subtitleRouteSeed}.ass`;
+  server.registerHandler(route, () => {
+    return HttpResponse.ok(HttpResponseBody.text(assText));
+  });
+  return `http://127.0.0.1:${server.port}${route}`;
+}
+
 export async function openInSenPlayer(args: {
   videoUrl: string;
   subtitleUrl?: string;

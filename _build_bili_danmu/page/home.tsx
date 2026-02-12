@@ -1,5 +1,7 @@
 ﻿import { Button, List, Menu, Section, SecureField, Text, TextField } from "scripting";
 
+export type AssDeliveryMode = "auto" | "local_httpserver" | "webdav_upload";
+
 export function HomeView({
   input,
   setInput,
@@ -25,6 +27,8 @@ export function HomeView({
   setWebdavUserAgent,
   webdavPlayer,
   setWebdavPlayer,
+  assDeliveryMode,
+  setAssDeliveryMode,
   onOpenWebDavBrowser,
   onClearCache,
   onClear,
@@ -54,6 +58,8 @@ export function HomeView({
   setWebdavUserAgent: (v: string) => void;
   webdavPlayer: "senplayer" | "infuse";
   setWebdavPlayer: (v: "senplayer" | "infuse") => void;
+  assDeliveryMode: AssDeliveryMode;
+  setAssDeliveryMode: (v: AssDeliveryMode) => void;
   onOpenWebDavBrowser: () => Promise<void>;
   onClearCache: () => void;
   onClear: () => void;
@@ -105,6 +111,19 @@ export function HomeView({
           <Button title={"SenPlayer"} action={() => setWebdavPlayer("senplayer")} />
           <Button title={"Infuse"} action={() => setWebdavPlayer("infuse")} />
         </Menu>
+        <Menu
+          title={`ASS 字幕来源: ${
+            assDeliveryMode === "auto"
+              ? "智能模式"
+              : assDeliveryMode === "local_httpserver"
+                ? "本地 HttpServer"
+                : "WebDAV 上传"
+          }`}
+        >
+          <Button title={"智能模式（会员优先本地，自动回退通用）"} action={() => setAssDeliveryMode("auto")} />
+          <Button title={"本地 HttpServer（会员）"} action={() => setAssDeliveryMode("local_httpserver")} />
+          <Button title={"WebDAV 上传（通用）"} action={() => setAssDeliveryMode("webdav_upload")} />
+        </Menu>
         <Button title={loading ? "处理中..." : "打开 WebDAV 浏览器"} action={onOpenWebDavBrowser} />
       </Section>
       <Section>
@@ -117,5 +136,4 @@ export function HomeView({
     </List>
   );
 }
-
 

@@ -1,16 +1,30 @@
 ﻿import { Button, Link, List, Navigation, NavigationStack, Section, Text, useEffect, useState } from "scripting";
-import { WebDavConfig, WebDavEntry, buildRemoteFileUrl, isVideoEntry, listWebDavDirectory, openInInfuse, openInSenPlayer, parentPath, uploadTextToWebDav } from "../class/webdav";
+import {
+  WebDavConfig,
+  WebDavEntry,
+  buildLocalAssSubtitleUrl,
+  buildRemoteFileUrl,
+  isVideoEntry,
+  listWebDavDirectory,
+  openInInfuse,
+  openInSenPlayer,
+  parentPath,
+  uploadTextToWebDav,
+} from "../class/webdav";
+import type { AssDeliveryMode } from "./home";
 
 const LATEST_ASS_STORAGE_KEY = "bili_danmu_latest_ass_text";
 
 export function WebDavBrowserView({
   config,
   player,
+  assDeliveryMode,
   sessionAssText,
   onLog,
 }: {
   config: WebDavConfig;
   player: "senplayer" | "infuse";
+  assDeliveryMode: AssDeliveryMode;
   sessionAssText: string;
   onLog: (msg: string) => void;
 }) {
@@ -104,13 +118,36 @@ export function WebDavBrowserView({
     await openPlayer(video, subUrl, displayName);
   }
 
+  async function playAssWithSelectedMode(video: WebDavEntry, assText: string, assNameHint: string) {
+    if (assDeliveryMode === "webdav_upload") {
+      await uploadAssAndPlay(video, assText, assNameHint);
+      return;
+    }
+
+    if (assDeliveryMode === "local_httpserver") {
+      setStatus("正在通过本地 HttpServer 提供 ASS 字幕...");
+      const subUrl = buildLocalAssSubtitleUrl(assText);
+      await openPlayer(video, subUrl, assNameHint || "字幕");
+      return;
+    }
+
+    try {
+      setStatus("ASS 模式: 自动，优先尝试本地 HttpServer...");
+      const subUrl = buildLocalAssSubtitleUrl(assText);
+      await openPlayer(video, subUrl, assNameHint || "字幕");
+    } catch (error: any) {
+      setStatus(`HttpServer 不可用，回退 WebDAV 上传...\n${String(error?.message ?? error)}`);
+      await uploadAssAndPlay(video, assText, assNameHint);
+    }
+  }
+
   async function onPlayWithLatestScriptAss(video: WebDavEntry) {
     try {
       const text = getLatestAssText();
       if (!text) {
         throw new Error("当前没有“刚下载的ASS”，请先回首页执行一次“转换 ASS（不保存）”");
       }
-      await uploadAssAndPlay(video, text, "latest");
+      await playAssWithSelectedMode(video, text, "latest");
     } catch (error: any) {
       const msg = `使用刚下载 ASS 播放失败: ${String(error?.message ?? error)}`;
       setStatus(msg);
@@ -137,7 +174,7 @@ export function WebDavBrowserView({
         setStatus("已取消选择本地 ASS");
         return;
       }
-      await uploadAssAndPlay(video, picked.text, picked.name);
+      await playAssWithSelectedMode(video, picked.text, picked.name);
     } catch (error: any) {
       const msg = `选择本地 ASS 播放失败: ${String(error?.message ?? error)}`;
       setStatus(msg);
@@ -192,6 +229,14 @@ export function WebDavBrowserView({
 
         <Section title={"播放操作"}>
           <Text>{selectedVideo ? `当前视频: ${selectedVideo.name}` : "先从上方选择一个视频文件"}</Text>
+          <Text>
+            ASS 字幕来源:
+            {assDeliveryMode === "auto"
+              ? " 智能模式（会员优先本地，自动回退通用）"
+              : assDeliveryMode === "local_httpserver"
+                ? " 本地 HttpServer（会员）"
+                : " WebDAV 上传（通用）"}
+          </Text>
           <Button
             title={loading || actionBusy ? "处理中..." : "直接播放（无字幕）"}
             action={() => {
@@ -247,3 +292,4 @@ export function WebDavBrowserView({
     </NavigationStack>
   );
 }
+

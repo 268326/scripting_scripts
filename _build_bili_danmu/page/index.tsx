@@ -16,7 +16,7 @@ import {
   statusSummary,
 } from "../class/danmu";
 import { WebDavConfig } from "../class/webdav";
-import { HomeView } from "./home";
+import { AssDeliveryMode, HomeView } from "./home";
 import { SettingView } from "./setting";
 import { WebDavBrowserView } from "./webdav";
 
@@ -28,6 +28,7 @@ const STORAGE_KEYS = {
   webdavStartPath: "bili_danmu_webdav_start_path",
   webdavUserAgent: "bili_danmu_webdav_user_agent",
   webdavPlayer: "bili_danmu_webdav_player",
+  assDeliveryMode: "bili_danmu_ass_delivery_mode",
   latestAssText: "bili_danmu_latest_ass_text",
   latestAssUpdatedAt: "bili_danmu_latest_ass_updated_at",
 };
@@ -135,8 +136,13 @@ export function View() {
   const [webdavStartPath, setWebdavStartPath] = useState(loadString(STORAGE_KEYS.webdavStartPath, "/"));
   const [webdavUserAgent, setWebdavUserAgent] = useState(loadString(STORAGE_KEYS.webdavUserAgent, ""));
   const [webdavPlayer, setWebdavPlayer] = useState<"senplayer" | "infuse">(
-    loadString(STORAGE_KEYS.webdavPlayer, "senplayer") === "infuse" ? "infuse" : "senplayer",
+    loadString(STORAGE_KEYS.webdavPlayer, "infuse") === "senplayer" ? "senplayer" : "infuse",
   );
+  const [assDeliveryMode, setAssDeliveryMode] = useState<AssDeliveryMode>(() => {
+    const mode = loadString(STORAGE_KEYS.assDeliveryMode, "auto");
+    if (mode === "local_httpserver" || mode === "webdav_upload" || mode === "auto") return mode;
+    return "auto";
+  });
   const [lastXml, setLastXml] = useState<LastXmlState | null>(null);
   const [lastAss, setLastAss] = useState<LastAssState | null>(null);
 
@@ -173,6 +179,10 @@ export function View() {
   }, [webdavPlayer]);
 
   useEffect(() => {
+    Storage.set(STORAGE_KEYS.assDeliveryMode, assDeliveryMode);
+  }, [assDeliveryMode]);
+
+  useEffect(() => {
     const updatedAt = loadNumber(STORAGE_KEYS.latestAssUpdatedAt, 0);
     const now = Date.now();
     if (updatedAt > 0 && now - updatedAt > LATEST_ASS_TTL_MS) {
@@ -205,6 +215,7 @@ export function View() {
         <WebDavBrowserView
           config={cfg}
           player={webdavPlayer}
+          assDeliveryMode={assDeliveryMode}
           sessionAssText={sessionAssTextArg ?? lastAss?.ass ?? loadString(STORAGE_KEYS.latestAssText, "")}
           onLog={(msg) => {
             setStatus(msg);
@@ -470,6 +481,8 @@ export function View() {
         setWebdavUserAgent={setWebdavUserAgent}
         webdavPlayer={webdavPlayer}
         setWebdavPlayer={setWebdavPlayer}
+        assDeliveryMode={assDeliveryMode}
+        setAssDeliveryMode={setAssDeliveryMode}
         onOpenWebDavBrowser={onOpenWebDavBrowser}
         onClearCache={onClearCache}
         onClear={onClear}
