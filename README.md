@@ -1,4 +1,11 @@
-﻿# B站弹幕工具箱 (BiliDanmu Toolkit)
+﻿# SurgeModuleTool.scripting
+# Celluar_INFO.scripting
+
+
+以上脚本均搬运移植于同名scriptable脚本
+
+
+# B站弹幕工具箱 (BiliDanmu Toolkit)
 
 一个用于 iOS `Scripting` App 的 B 站弹幕工具脚本：
 - 在线获取 B 站弹幕 XML
