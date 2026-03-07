@@ -1,4 +1,9 @@
-﻿# SurgeModuleTool.scripting
+所有模块皆纯自用vide，感谢所有脚本原作者的辛勤付出
+
+万象下载更新二改自https://github.com/BlackCCCat/Scripting-Scripts/releases/latest/download/Rime-Wanxiang-Updater.zip
+
+ 
+# SurgeModuleTool.scripting
 # Celluar_INFO.scripting
 
 
@@ -73,5 +78,6 @@ _build_bili_danmu/
 ## License
 
 MIT
+
 
 
